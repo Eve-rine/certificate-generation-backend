@@ -1,6 +1,7 @@
 package com.seccertificate.cert_generation.service.impl;
 
 import com.seccertificate.cert_generation.model.Customer;
+import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.repository.CustomerRepository;
 import com.seccertificate.cert_generation.service.CustomerService;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer createCustomer(Customer customer) {
-        return customerRepository.save(customer);
+        Customer newCustomer = new Customer();
+        newCustomer.setName(customer.getName());
+        newCustomer.setEmail(customer.getEmail());
+        return customerRepository.save(newCustomer);
     }
 
     @Override
