@@ -21,8 +21,8 @@ public class AuthController {
     public LoginResponse login(@RequestParam String username, @RequestParam String password) {
         var user = userService.findByUsername(username);
         if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-            String token = JwtUtil.generateToken(username);
-            long expiry = JwtUtil.getExpiryFromToken(token); // Implement this method in JwtUtil
+            String token = JwtUtil.generateToken(username, user.getRole());
+            long expiry = JwtUtil.getExpiryFromToken(token);
             return new LoginResponse(token, expiry,user.getRole());
         }
         throw new RuntimeException("Invalid credentials");
