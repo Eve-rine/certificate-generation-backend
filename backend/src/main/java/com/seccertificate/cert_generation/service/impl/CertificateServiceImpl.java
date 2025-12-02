@@ -62,8 +62,6 @@ public class CertificateServiceImpl implements CertificateService {
             Certificate cert = certificateRepository.findById(UUID.fromString(id))
                 .orElseThrow(() -> new IllegalArgumentException("Certificate not found"));
 
-        // Assume cert.getTemplateId() and cert.getData() are available
-        // You may need to fetch the template HTML using the templateId
         String templateIdStr = cert.getTemplateId() != null ? cert.getTemplateId().toString() : null;
         System.out.println("Generating PDF for Certificate ID: " + id + ", Template ID: " + templateIdStr);
 
