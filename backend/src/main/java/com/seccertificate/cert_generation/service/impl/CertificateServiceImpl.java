@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seccertificate.cert_generation.dto.GenerateRequest;
 import com.seccertificate.cert_generation.model.Certificate;
+import com.seccertificate.cert_generation.model.Template;
 import com.seccertificate.cert_generation.repository.CertificateRepository;
+import com.seccertificate.cert_generation.repository.TemplateRepository;
 import com.seccertificate.cert_generation.service.CertificateService;
 import com.seccertificate.cert_generation.service.PdfGeneratorService;
 import jakarta.transaction.Transactional;
@@ -18,10 +20,12 @@ import java.util.UUID;
 public class CertificateServiceImpl implements CertificateService {
     private final CertificateRepository certificateRepository;
     private final PdfGeneratorService pdfGeneratorService;
+    private final TemplateRepository templateRepository;
 
-    public CertificateServiceImpl(CertificateRepository certificateRepository, PdfGeneratorService pdfGeneratorService) {
+    public CertificateServiceImpl(CertificateRepository certificateRepository, PdfGeneratorService pdfGeneratorService, TemplateRepository templateRepository) {
         this.certificateRepository = certificateRepository;
         this.pdfGeneratorService = pdfGeneratorService;
+        this.templateRepository = templateRepository;
     }
 
     @Override
@@ -61,6 +65,7 @@ public class CertificateServiceImpl implements CertificateService {
         // Assume cert.getTemplateId() and cert.getData() are available
         // You may need to fetch the template HTML using the templateId
         String templateIdStr = cert.getTemplateId() != null ? cert.getTemplateId().toString() : null;
+        System.out.println("Generating PDF for Certificate ID: " + id + ", Template ID: " + templateIdStr);
 
         String templateHtml = cert.getTemplateId() != null
                 ? fetchTemplateHtml(templateIdStr)
@@ -81,9 +86,11 @@ public class CertificateServiceImpl implements CertificateService {
 
     // Example method to fetch template HTML (implement as needed)
     private String fetchTemplateHtml(String templateId) {
-        // TODO: Fetch template HTML from DB or storage
-        return "<html><body>Certificate for {{student_name}}</body></html>";
+        Template template = templateRepository.findById(UUID.fromString(templateId))
+                .orElseThrow(() -> new IllegalArgumentException("Template not found for ID: " + templateId));
+        return template.getHtml();
     }
+
 
 
     @Transactional
@@ -102,7 +109,6 @@ public class CertificateServiceImpl implements CertificateService {
         cert.setId(UUID.randomUUID());
         cert.setCustomerId(customerId);
         cert.setTemplateId(templateId != null ? UUID.fromString(templateId) : null);
-//        cert.setData(dataJson);
         ObjectMapper mapper = new ObjectMapper();
         cert.setData(mapper.readTree(dataJson));
         cert.setStoragePath(storagePath);

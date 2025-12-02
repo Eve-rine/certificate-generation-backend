@@ -42,6 +42,7 @@ public class CertificateController {
             String customerId = user.getCustomerId();
             // log customerId
             String templateHtml = templateRepository.findLatestByCustomerId(customerId).getHtml();
+            String templateId = templateRepository.findLatestByCustomerId(customerId).getId().toString();
             if (templateHtml == null) {
                 throw new IllegalStateException("No template HTML found for customer");
             }
@@ -50,6 +51,7 @@ public class CertificateController {
             String dataJson = body.get("dataJson");
             GenerateRequest req = new GenerateRequest();
             req.setCustomerId(customerId);
+            req.setTemplateId(templateId);
             req.setTemplateHtml(templateHtml);
             req.setDataJson(dataJson);
 
