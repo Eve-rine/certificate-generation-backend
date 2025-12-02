@@ -1,6 +1,9 @@
 package com.seccertificate.cert_generation.model;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.seccertificate.cert_generation.convert.JsonNodeConverter;
+import com.seccertificate.cert_generation.convert.JsonNodeStringConverter;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -13,8 +16,9 @@ public class Certificate {
     @Column(nullable = false)
     private String customerId;
     private UUID templateId;
-    @Column(columnDefinition = "jsonb")
-    private String data;
+    @Convert(converter = JsonNodeStringConverter.class)
+    @Column(name = "data", columnDefinition = "text")
+    private JsonNode data;
     private String storagePath;
     private String signature; // digital signature metadata (JWS or PKCS7)
     private Instant issuedAt;
@@ -38,10 +42,10 @@ public class Certificate {
     public void setTemplateId(UUID templateId) {
         this.templateId = templateId;
     }
-    public String getData() {
+    public JsonNode getData() {
         return data;
     }
-    public void setData(String data) {
+    public void setData(JsonNode data) {
         this.data = data;
     }
 

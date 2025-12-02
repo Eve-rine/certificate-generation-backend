@@ -74,4 +74,14 @@ public class GenerateRequest {
     public void setSync(Boolean sync) {
         this.sync = sync;
     }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+    public void setTemplateHtml(String templateHtml) {
+        this.templateHtml = templateHtml;
+    }
+    public void setDataJson(String dataJson) {
+        this.dataJson = dataJson;
+    }
 }
