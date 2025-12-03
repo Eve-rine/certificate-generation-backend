@@ -42,6 +42,8 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
+//                        .allowedOrigins("http://localhost:4200")
+                        .allowedOrigins("https://cert-management-frontend.vercel.app/")
                         .allowedOrigins("http://localhost:4200")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*") // or specifically .allowedHeaders("Authorization", "Content-Type")
