@@ -52,50 +52,54 @@ public class TemplateServiceImpl implements TemplateService {
      *
      * Returns the persisted Template.
      */
+
     @Override
     public Template saveTemplate(MultipartFile file, JsonNode schemaNode, String customerId) throws Exception {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("template file is required");
         }
-
         if (file.getSize() > MAX_HTML_BYTES) {
             throw new IllegalArgumentException("template file too large");
         }
 
         byte[] bytes = file.getBytes();
         String rawHtml = new String(bytes, StandardCharsets.UTF_8);
-
-        // 1) sanitize HTML: remove scripts, event handlers, data: URIs, etc.
         String safeHtml = Jsoup.clean(rawHtml,
-                Safelist.relaxed()
-                        .preserveRelativeLinks(true)
-                        .addAttributes(":all", "class", "id", "style")
-        );
+                Safelist.relaxed().preserveRelativeLinks(true).addAttributes(":all", "class", "id", "style"));
 
-        // 2) extract placeholders from sanitized HTML
+        // Ensure <html> and <body> tags
+        String lower = safeHtml.toLowerCase();
+        if (!lower.contains("<html")) {
+            safeHtml = "<html><body>" + safeHtml + "</body></html>";
+        } else if (!lower.contains("<body")) {
+            // If <html> exists but <body> does not, wrap content in <body>
+            safeHtml = safeHtml.replaceFirst("(?i)(<html[^>]*>)", "$1<body>") + "</body>";
+        }
+
         Set<String> placeholders = extractPlaceholders(safeHtml);
 
-        // 3) if no schema provided, auto-generate a minimal one from placeholders
         if (schemaNode == null) {
             schemaNode = generateMinimalSchema(placeholders);
         } else {
-            // Optional: basic size check for schema if it was provided as a string elsewhere
             String schemaStr = objectMapper.writeValueAsString(schemaNode);
             if (schemaStr.getBytes(StandardCharsets.UTF_8).length > MAX_SCHEMA_BYTES) {
                 throw new IllegalArgumentException("provided schema too large");
             }
-
-            // Optional: further validation with a JSON Schema validator can be added here.
-            // Also ensure schema declares placeholders; you may choose to auto-add missing props or reject.
         }
 
-        // 4) Persist template (set fields, timestamps)
-        Template template = new Template();
+        Template template = templateRepository.findByCustomerId(customerId)
+                .orElse(new Template());
+
         template.setCustomerId(customerId);
         template.setName(file.getOriginalFilename());
         template.setHtml(safeHtml);
         template.setJsonSchema(schemaNode);
-        template.setCreatedAt(Instant.now());
+
+        if (template.getId() == null) {
+            template.setCreatedAt(Instant.now());
+        } else {
+            template.setUpdatedAt(Instant.now());
+        }
 
         return templateRepository.save(template);
     }
@@ -104,8 +108,6 @@ public class TemplateServiceImpl implements TemplateService {
     public String getCustomerIdForUser(String username) {
         return userRepository.findByUsername(username).getCustomerId();
     }
-
-    // ----- helpers -----
 
     private Set<String> extractPlaceholders(String html) {
         Matcher m = PLACEHOLDER.matcher(html);

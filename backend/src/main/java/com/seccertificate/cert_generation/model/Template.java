@@ -34,6 +34,8 @@ public class Template {
 
     private Instant createdAt;
 
+    private Instant updatedAt;
+
     // getters / setters ...
 
     public UUID getId() { return id; }
@@ -59,4 +61,8 @@ public class Template {
 
     // convenience
     public void setContent(String s) { this.html = s; }
+
+    public void setUpdatedAt(Instant now) {
+        this.updatedAt = now;
+    }
 }

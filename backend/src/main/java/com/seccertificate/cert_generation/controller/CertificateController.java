@@ -1,5 +1,6 @@
 package com.seccertificate.cert_generation.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seccertificate.cert_generation.dto.GenerateRequest;
 import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.repository.TemplateRepository;
@@ -29,7 +30,7 @@ public class CertificateController {
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<String> generate(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> generate(@RequestBody Map<String, String> body) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String username = (String) auth.getPrincipal();
@@ -40,13 +41,11 @@ public class CertificateController {
             }
 
             String customerId = user.getCustomerId();
-            // log customerId
             String templateHtml = templateRepository.findLatestByCustomerId(customerId).getHtml();
             String templateId = templateRepository.findLatestByCustomerId(customerId).getId().toString();
             if (templateHtml == null) {
                 throw new IllegalStateException("No template HTML found for customer");
             }
-            System.out.println("Using template HTML: " + templateHtml);
 
             String dataJson = body.get("dataJson");
             GenerateRequest req = new GenerateRequest();
@@ -56,9 +55,19 @@ public class CertificateController {
             req.setDataJson(dataJson);
 
             String certId = certificateService.generateCertificate(req, customerId);
-            return ResponseEntity.ok(certId);
+
+            Map<String, Object> response = Map.of(
+                    "success", true,
+                    "id", certId,
+                    "message", "generated successfully"
+            );
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Certificate generation failed: " + e.getMessage());
+            Map<String, Object> error = Map.of(
+                    "success", false,
+                    "message", "Certificate generation failed: " + e.getMessage()
+            );
+            return ResponseEntity.badRequest().body(error);
         }
     }
 
@@ -81,4 +90,23 @@ public class CertificateController {
             return ResponseEntity.badRequest().body(null);
         }
     }
+
+    @GetMapping("/schema")
+    public ResponseEntity<Object> getSchema() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = (String) auth.getPrincipal();
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+        String customerId = user.getCustomerId();
+        var template = templateRepository.findLatestByCustomerId(customerId);
+        if (template == null || template.getJsonSchema() == null) {
+            return ResponseEntity.badRequest().body("No schema found for customer");
+        }
+        // Convert JsonNode to Map for proper serialization
+        Object schemaObj = new ObjectMapper().convertValue(template.getJsonSchema(), Map.class);
+        return ResponseEntity.ok(schemaObj);
+    }
+
 }
