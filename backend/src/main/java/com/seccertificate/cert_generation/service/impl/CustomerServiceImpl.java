@@ -7,6 +7,7 @@ import com.seccertificate.cert_generation.service.CustomerService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -28,4 +29,20 @@ public class CustomerServiceImpl implements CustomerService {
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
     }
+
+    // Java
+    @Override
+    public void deleteCustomer(String id) {
+        customerRepository.deleteById(id);
+    }
+
+    @Override
+    public Customer updateCustomer(String id, Customer customer) {
+        Customer existing = customerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+        existing.setName(customer.getName());
+        existing.setEmail(customer.getEmail());
+        return customerRepository.save(existing);
+    }
+
 }
