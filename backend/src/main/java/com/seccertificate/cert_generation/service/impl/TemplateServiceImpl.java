@@ -71,7 +71,6 @@ public class TemplateServiceImpl implements TemplateService {
             String customerId
     ) throws Exception {
 
-        // --- 1. Validate input ---
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Template name is required");
         }
@@ -85,10 +84,8 @@ public class TemplateServiceImpl implements TemplateService {
             throw new IllegalArgumentException("Template name must be unique per customer");
         }
 
-        // --- 2. Read raw HTML ---
         String rawHtml = new String(file.getBytes(), StandardCharsets.UTF_8);
 
-        // --- 3. Clean HTML (HTML5) ---
         String cleanedHtml = Jsoup.clean(
                 rawHtml,
                 Safelist.relaxed()
@@ -96,7 +93,6 @@ public class TemplateServiceImpl implements TemplateService {
                         .addAttributes(":all", "class", "id", "style")
         );
 
-        // --- 4. Convert cleaned HTML to XHTML ---
         Document xhtmlDoc = Jsoup.parse(cleanedHtml);
         xhtmlDoc.outputSettings()
                 .syntax(Document.OutputSettings.Syntax.xml)     // force XHTML mode
@@ -105,10 +101,8 @@ public class TemplateServiceImpl implements TemplateService {
 
         String safeHtml = xhtmlDoc.html();
 
-        // --- 5. XHTML Fix: ensure <br>, <img>, etc. self-close properly ---
         safeHtml = safeHtml.replaceAll("(?i)<br\\b([^>]*)>", "<br$1/>");
 
-        // --- 6. Ensure <html><body> structure ---
         String lower = safeHtml.toLowerCase();
         if (!lower.contains("<html")) {
             safeHtml = "<html><body>" + safeHtml + "</body></html>";
@@ -116,10 +110,8 @@ public class TemplateServiceImpl implements TemplateService {
             safeHtml = safeHtml.replaceFirst("(?i)(<html[^>]*>)", "$1<body>") + "</body>";
         }
 
-        // --- 7. Extract placeholders ---
         Set<String> placeholders = extractPlaceholders(safeHtml);
 
-        // --- 8. Generate or validate schema ---
         if (schemaNode == null) {
             schemaNode = generateMinimalSchema(placeholders);
         } else {
@@ -129,19 +121,16 @@ public class TemplateServiceImpl implements TemplateService {
             }
         }
 
-        // --- 9. Logo upload ---
         String logoUrl = null;
         if (logo != null && !logo.isEmpty()) {
             logoUrl = imageStorageService.upload(customerId, logo);
         }
 
-        // --- 10. Signature upload ---
         String signatureUrl = null;
         if (signature != null && !signature.isEmpty()) {
             signatureUrl = imageStorageService.upload(customerId, signature);
         }
 
-        // --- 11. Persist template ---
         Template template = new Template();
         template.setCustomerId(customerId);
         template.setName(name);
@@ -223,7 +212,6 @@ public class TemplateServiceImpl implements TemplateService {
         if (optTmpl.isEmpty()) return null;
         Template template = optTmpl.get();
 
-        // Update fields
         template.setName(name);
 
         // Update HTML
@@ -243,7 +231,7 @@ public class TemplateServiceImpl implements TemplateService {
             safeHtml = safeHtml
                     // Normalize BR tags
                     .replaceAll("(?i)<br\\s*/?>", "<br/>")
-                    .replaceAll("(?i)<br\\s*//?>", "<br/>")   // <-- FIX for <br //>
+                    .replaceAll("(?i)<br\\s*//?>", "<br/>")
 
                     // Replace weird JSX-style tags
                     .replaceAll("(?i)<br\\s*//\\s*>", "<br/>")
