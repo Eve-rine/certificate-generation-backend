@@ -1,4 +1,4 @@
-package com.seccertificate.cert_generation.service.impl;
+package com.seccertificate.cert_generation.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

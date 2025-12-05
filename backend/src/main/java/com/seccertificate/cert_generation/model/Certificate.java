@@ -2,7 +2,6 @@ package com.seccertificate.cert_generation.model;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.seccertificate.cert_generation.convert.JsonNodeConverter;
 import com.seccertificate.cert_generation.convert.JsonNodeStringConverter;
 import jakarta.persistence.*;
 import java.time.Instant;

@@ -10,8 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 
 public interface TemplateRepository extends JpaRepository<Template, UUID> {
-    Template findLatestByCustomerId(String customerId);
-
 
     List<Template> findByCustomerId(String customerId);
     Optional<Template> findByIdAndCustomerId(UUID id, String customerId);
