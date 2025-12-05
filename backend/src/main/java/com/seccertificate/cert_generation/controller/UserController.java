@@ -1,5 +1,6 @@
 package com.seccertificate.cert_generation.controller;
 
+import com.seccertificate.cert_generation.dto.UserDto;
 import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,12 +20,24 @@ public class UserController {
 //    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public User createUser(@RequestBody User user) {
-        return userService.createUser(user.getUsername(), user.getPassword(), user.getRole(), user.getCustomerId());
+        return userService.createUser(user.getUsername(), user.getName(), user.getPassword(), user.getRole(), user.getCustomerId());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDto> getAllUsers() {
         return userService.getAllUsers();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public void deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public User updateUser(@PathVariable String id, @RequestBody User user) {
+        return userService.updateUser(id, user);
     }
 }

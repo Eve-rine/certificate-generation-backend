@@ -10,6 +10,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+
+    private String name;
+
     @Column(unique = true, nullable = false)
     private String username;
 
@@ -54,4 +57,15 @@ public class User {
         return role;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getId() {
+        return id;
+    }
 }

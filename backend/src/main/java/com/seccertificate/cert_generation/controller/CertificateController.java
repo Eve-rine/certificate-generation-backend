@@ -2,6 +2,7 @@ package com.seccertificate.cert_generation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.seccertificate.cert_generation.dto.GenerateRequest;
+import com.seccertificate.cert_generation.model.Template;
 import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.repository.TemplateRepository;
 import com.seccertificate.cert_generation.repository.UserRepository;
@@ -13,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/certificates")
@@ -41,16 +43,31 @@ public class CertificateController {
             }
 
             String customerId = user.getCustomerId();
-            String templateHtml = templateRepository.findLatestByCustomerId(customerId).getHtml();
-            String templateId = templateRepository.findLatestByCustomerId(customerId).getId().toString();
+
+            // --- Use templateId from request ---
+            String templateIdStr = body.get("templateId");
+            if (templateIdStr == null || templateIdStr.isBlank()) {
+                throw new IllegalArgumentException("templateId is required");
+            }
+
+            UUID templateId = UUID.fromString(templateIdStr);
+            Template template = templateRepository.findById(templateId)
+                    .orElseThrow(() -> new IllegalArgumentException("Template not found"));
+
+            if (!customerId.equals(template.getCustomerId())) {
+                throw new IllegalStateException("Template does not belong to your customer");
+            }
+
+            String templateHtml = template.getHtml();
             if (templateHtml == null) {
-                throw new IllegalStateException("No template HTML found for customer");
+                throw new IllegalStateException("Template HTML is empty");
             }
 
             String dataJson = body.get("dataJson");
+
             GenerateRequest req = new GenerateRequest();
             req.setCustomerId(customerId);
-            req.setTemplateId(templateId);
+            req.setTemplateId(templateId.toString());
             req.setTemplateHtml(templateHtml);
             req.setDataJson(dataJson);
 
@@ -59,9 +76,10 @@ public class CertificateController {
             Map<String, Object> response = Map.of(
                     "success", true,
                     "id", certId,
-                    "message", "generated successfully"
+                    "message", "Certificate generated successfully"
             );
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             Map<String, Object> error = Map.of(
                     "success", false,
@@ -91,22 +109,27 @@ public class CertificateController {
         }
     }
 
-    @GetMapping("/schema")
-    public ResponseEntity<Object> getSchema() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = (String) auth.getPrincipal();
-        User user = userRepository.findByUsername(username);
-        if (user == null) {
-            return ResponseEntity.badRequest().body("User not found");
-        }
-        String customerId = user.getCustomerId();
-        var template = templateRepository.findLatestByCustomerId(customerId);
-        if (template == null || template.getJsonSchema() == null) {
-            return ResponseEntity.badRequest().body("No schema found for customer");
-        }
-        // Convert JsonNode to Map for proper serialization
-        Object schemaObj = new ObjectMapper().convertValue(template.getJsonSchema(), Map.class);
-        return ResponseEntity.ok(schemaObj);
+@GetMapping("/schema")
+public ResponseEntity<Object> getSchema(@RequestParam("templateId") UUID  templateId) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String username = (String) auth.getPrincipal();
+    User user = userRepository.findByUsername(username);
+    if (user == null) {
+        return ResponseEntity.badRequest().body("User not found");
     }
+    String customerId = user.getCustomerId();
+
+    var template = templateRepository.findById(templateId).orElse(null);
+
+    if (template == null || template.getJsonSchema() == null) {
+        return ResponseEntity.badRequest().body("No schema found for template");
+    }
+    if (!customerId.equals(template.getCustomerId())) {
+        return ResponseEntity.badRequest().body("Template does not belong to your customer");
+    }
+    Object schemaObj = new ObjectMapper().convertValue(template.getJsonSchema(), Map.class);
+    return ResponseEntity.ok(schemaObj);
+}
+
 
 }
