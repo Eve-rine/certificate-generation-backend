@@ -1,5 +1,6 @@
 package com.seccertificate.cert_generation.controller;
 
+import com.seccertificate.cert_generation.dto.UserDto;
 import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,7 +25,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<User> getAllUsers() {
+    public List<UserDto> getAllUsers() {
         return userService.getAllUsers();
     }
 

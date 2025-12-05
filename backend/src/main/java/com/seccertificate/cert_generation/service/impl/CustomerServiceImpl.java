@@ -30,14 +30,13 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.findAll();
     }
 
-    // Java
     @Override
-    public void deleteCustomer(String id) {
+    public void deleteCustomer(UUID id) {
         customerRepository.deleteById(id);
     }
 
     @Override
-    public Customer updateCustomer(String id, Customer customer) {
+    public Customer updateCustomer(UUID id, Customer customer) {
         Customer existing = customerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
         existing.setName(customer.getName());

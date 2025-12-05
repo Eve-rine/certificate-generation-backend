@@ -6,6 +6,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -32,12 +33,12 @@ public class CustomerController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteCustomer(@PathVariable String id) {
-        customerService.deleteCustomer(id);
+        customerService.deleteCustomer(UUID.fromString(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public Customer updateCustomer(@PathVariable String id, @RequestBody Customer customer) {
+    public Customer updateCustomer(@PathVariable UUID id, @RequestBody Customer customer) {
         return customerService.updateCustomer(id, customer);
     }
 

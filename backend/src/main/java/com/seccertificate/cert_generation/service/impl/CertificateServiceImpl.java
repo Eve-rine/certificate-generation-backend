@@ -21,11 +21,13 @@ public class CertificateServiceImpl implements CertificateService {
     private final CertificateRepository certificateRepository;
     private final PdfGeneratorService pdfGeneratorService;
     private final TemplateRepository templateRepository;
+    private final CertificateRepository customerRepository;
 
-    public CertificateServiceImpl(CertificateRepository certificateRepository, PdfGeneratorService pdfGeneratorService, TemplateRepository templateRepository) {
+    public CertificateServiceImpl(CertificateRepository certificateRepository, PdfGeneratorService pdfGeneratorService, TemplateRepository templateRepository, CertificateRepository customerRepository) {
         this.certificateRepository = certificateRepository;
         this.pdfGeneratorService = pdfGeneratorService;
         this.templateRepository = templateRepository;
+        this.customerRepository = customerRepository;
     }
 
     @Override
@@ -39,7 +41,7 @@ public class CertificateServiceImpl implements CertificateService {
             );
             return certId.toString();
         } catch (Exception e) {
-                        throw new RuntimeException("Certificate generation failed due to " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
+            throw new RuntimeException("Certificate generation failed due to " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
         }
     }
 
@@ -80,36 +82,6 @@ public class CertificateServiceImpl implements CertificateService {
         return template.getHtml();
     }
 
-
-
-//    @Transactional
-//    public UUID generateAndStore(String customerId,String templateId, String templateHtml, String dataJson) throws Exception {
-//        if (customerId == null) {
-//            throw new IllegalStateException("No customerId provided");
-//        }
-//
-//        String renderedHtml = applyDataToTemplate(templateHtml, dataJson);
-//        byte[] pdf = pdfGeneratorService.generatePdfFromHtml(renderedHtml);
-//
-//        String signature = "placeholder-signature";
-//        String storagePath = "minio://" + customerId + "/certificates/" + UUID.randomUUID() + ".pdf";
-//
-//        Certificate cert = new Certificate();
-//        cert.setId(UUID.randomUUID());
-//        cert.setCustomerId(customerId);
-//        cert.setTemplateId(templateId != null ? UUID.fromString(templateId) : null);
-//        ObjectMapper mapper = new ObjectMapper();
-//        cert.setData(mapper.readTree(dataJson));
-//        cert.setStoragePath(storagePath);
-//        cert.setSignature(signature);
-//        cert.setIssuedAt(Instant.now());
-//        cert.setRevoked(false);
-//
-//        certificateRepository.save(cert);
-//
-//        return cert.getId();
-//    }
-
     @Transactional
     public UUID generateAndStore(
             String customerId,
@@ -122,7 +94,6 @@ public class CertificateServiceImpl implements CertificateService {
             throw new IllegalStateException("No customerId provided");
         }
 
-        // 1️⃣ Apply data → HTML
         String renderedHtml = applyDataToTemplate(templateHtml, dataJson);
 
         renderedHtml = sanitizeForFop(renderedHtml);
@@ -151,16 +122,16 @@ public class CertificateServiceImpl implements CertificateService {
 
     // Example dataJson: {"student_name":"John Doe","course_name":"Java Basics","completion_date":"2024-06-10","certificate_number":"ABC123"}
     public String applyDataToTemplate(String html, String dataJson) throws Exception {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode data = mapper.readTree(dataJson);
-            String rendered = html;
-            for (Iterator<String> it = data.fieldNames(); it.hasNext(); ) {
-                String key = it.next();
-                String value = data.get(key).asText();
-                rendered = rendered.replace("{{" + key + "}}", value);
-            }
-            return rendered;
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode data = mapper.readTree(dataJson);
+        String rendered = html;
+        for (Iterator<String> it = data.fieldNames(); it.hasNext(); ) {
+            String key = it.next();
+            String value = data.get(key).asText();
+            rendered = rendered.replace("{{" + key + "}}", value);
         }
+        return rendered;
+    }
 
     private String sanitizeForFop(String html) {
 
@@ -196,5 +167,7 @@ public class CertificateServiceImpl implements CertificateService {
                 .replaceAll("[^\\x09\\x0A\\x0D\\x20-\\xFFFD]", "");
     }
 
-
+    public void deleteCustomer(String id) {
+        customerRepository.deleteById(UUID.fromString(id));
+    }
 }

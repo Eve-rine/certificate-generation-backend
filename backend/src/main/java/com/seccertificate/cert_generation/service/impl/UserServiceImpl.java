@@ -1,5 +1,6 @@
 package com.seccertificate.cert_generation.service.impl;
 
+import com.seccertificate.cert_generation.dto.UserDto;
 import com.seccertificate.cert_generation.model.User;
 import com.seccertificate.cert_generation.repository.UserRepository;
 import com.seccertificate.cert_generation.service.UserService;
@@ -34,10 +35,25 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUsername(username);
     }
 
+//    @Override
+//    public List<UserDto> getAllUsers() {
+//        return userRepository.findAll();
+//    }
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> {
+                    UserDto dto = new UserDto();
+                    dto.setId(user.getId());
+                    dto.setName(user.getName());
+                    dto.setUsername(user.getUsername());
+                    dto.setRole(user.getRole());
+                    dto.setCustomerId(user.getCustomerId());
+                    return dto;
+                })
+                .toList();
     }
+
 
     @Override
     public void deleteUser(String id) {
