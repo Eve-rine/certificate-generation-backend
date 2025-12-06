@@ -19,7 +19,14 @@ public class Certificate {
     @Column(name = "data", columnDefinition = "text")
     private JsonNode data;
     private String storagePath;
-    private String signature; // digital signature metadata (JWS or PKCS7)
+    @Column(name = "signature", nullable = false, length = 500)
+    private String signature;
+
+    @Column(name = "verification_code", length = 20)
+    private String verificationCode;
+
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
     private Instant issuedAt;
     private boolean revoked;
 
@@ -70,5 +77,21 @@ public class Certificate {
 
     public void setRevoked(boolean b) {
         this.revoked = b;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public String getContentHash() {
+        return contentHash;
+    }
+
+    public void setContentHash(String contentHash) {
+        this.contentHash = contentHash;
     }
 }
