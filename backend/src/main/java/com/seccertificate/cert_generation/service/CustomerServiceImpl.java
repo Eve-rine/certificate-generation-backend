@@ -1,4 +1,4 @@
-package com.seccertificate.cert_generation.service.impl;
+package com.seccertificate.cert_generation.service;
 
 import com.seccertificate.cert_generation.model.Customer;
 import com.seccertificate.cert_generation.model.User;
